@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMO Inmunomediadas · Estratificación y Atención Farmacéutica</title>
+  <meta name="description" content="Herramienta de apoyo a la decisión para la estratificación CMO-MAPEX y el plan de atención farmacéutica en enfermedades inflamatorias inmunomediadas." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3ECMO%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="app-root"></div>
+    <footer class="app-footer">
+      <p>Basado en el Proyecto MAPEX · SEFH. Herramienta de apoyo a la decisión clínica: no sustituye el juicio profesional del farmacéutico.</p>
+      <p><a href="AI_POLICY.md">Política de uso de IA</a> · <a href="PRIVACY.md">Privacidad</a> · <a href="CLINICAL_MODEL.md">Modelo clínico</a></p>
+    </footer>
+  </div>
+  <div id="modal-layer"></div>
+
+  <!--
+    Extracción por IA real (opcional): defina aquí la URL de un backend
+    propio (función serverless) que reciba { clinicalText, variables,
+    instructions } y devuelva { results: [...] }. Sin esta configuración la
+    aplicación funciona en modo demostración (heurística local, sin IA real)
+    y la estratificación manual sigue estando siempre disponible.
+    Ver AI_POLICY.md y ARCHITECTURE.md.
+
+    window.CMO_APP_CONFIG = { extractionEndpointUrl: 'https://mi-backend.ejemplo.org/extraer' };
+  -->
+  <script>
+    window.CMO_APP_CONFIG = window.CMO_APP_CONFIG || {};
+  </script>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
