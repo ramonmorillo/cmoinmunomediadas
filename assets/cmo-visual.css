@@ -1,0 +1,103 @@
+/* CMO Suite · capa visual común basada en CMO Migraña */
+:root {
+  --cmo-accent: #bd8cff;
+  --cmo-accent-dark: #6642a5;
+  --cmo-accent-soft: #f1eaff;
+  --cmo-bg-a: #3d286c;
+  --cmo-bg-b: #245d70;
+  --cmo-focus: #ffbf47;
+  --cmo-panel: #f8fbff;
+  --cmo-line: #d8e2f0;
+  --cmo-ink: #172033;
+  --cmo-muted: #5b6880;
+  --cmo-radius: 28px;
+  --cmo-shadow: 0 24px 70px #02081740;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  min-height: 100vh;
+  background: radial-gradient(
+    circle at 15% 8%,
+    var(--cmo-bg-a) 0,
+    #101b33 36%,
+    var(--cmo-bg-b) 100%
+  ) !important;
+  color: var(--cmo-ink);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+.app-shell {
+  position: relative;
+  max-width: 1240px !important;
+}
+.app-header {
+  padding: 28px !important;
+  border: 1px solid #ffffff2b !important;
+  border-radius: var(--cmo-radius) !important;
+  box-shadow: var(--cmo-shadow) !important;
+  background: linear-gradient(135deg, #493078, #6848a5 55%, #276176) !important;
+  color: #fff;
+}
+.app-header h1 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem) !important;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  color: #fff !important;
+}
+.app-header p {
+  color: #f1eaff !important;
+}
+:where(
+  .card,
+  .stepper-wrap,
+  .review-row,
+  .need-chip,
+  .intervention-card,
+  .modal
+) {
+  border-radius: 22px !important;
+  box-shadow: 0 16px 42px #0208171c !important;
+}
+.stepper__item--current .stepper__num,
+.progress__bar {
+  background: var(--cmo-accent-dark) !important;
+}
+button,
+.btn {
+  border-radius: 999px !important;
+}
+input,
+select,
+textarea {
+  border-radius: 13px !important;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 4px solid var(--cmo-focus) !important;
+  outline-offset: 2px;
+}
+footer.app-footer {
+  border-radius: 22px;
+  background: #f8fbfff0;
+  padding: 18px;
+  color: var(--cmo-ink) !important;
+  box-shadow: 0 16px 42px #0208171c !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
