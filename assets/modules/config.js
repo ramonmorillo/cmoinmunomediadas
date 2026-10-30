@@ -6,7 +6,7 @@
 // herramienta original. No modificar variables, pesos, bloques ni umbrales
 // sin una razón clínica documentada.
 
-export const APP_VERSION = 'CMO Inmunomediadas v1 · Septiembre 2026';
+export const APP_VERSION = 'CMO Inmunomediadas v1.1.0 · Octubre 2026';
 export const STORAGE_KEY = 'cmo-inmunomediadas-v1-state';
 export const CASE_LIBRARY_KEY = 'cmo-inmunomediadas-v1-casos';
 
