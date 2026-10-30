@@ -1,0 +1,534 @@
+{
+ "blocks": [
+  {
+   "id": "demografica",
+   "maxPoints": 9
+  },
+  {
+   "id": "sociosanitaria",
+   "maxPoints": 21
+  },
+  {
+   "id": "clinica",
+   "maxPoints": 14
+  },
+  {
+   "id": "farmacoterapeutica",
+   "maxPoints": 25
+  },
+  {
+   "id": "especifica",
+   "maxPoints": 2
+  }
+ ],
+ "ageGroups": [
+  {
+   "value": "≤12",
+   "weight": 1,
+   "min": 0,
+   "max": 12
+  },
+  {
+   "value": "13-17",
+   "weight": 3,
+   "min": 13,
+   "max": 17
+  },
+  {
+   "value": "18-69",
+   "weight": 2,
+   "min": 18,
+   "max": 69
+  },
+  {
+   "value": "≥70",
+   "weight": 2,
+   "min": 70,
+   "max": 200
+  }
+ ],
+ "thresholds": {
+  "level1": 31,
+  "level2": 18
+ },
+ "priorityConfig": {
+  "1": {
+   "label": "Prioridad 1",
+   "followUp": "Valoración semestral (cada 6 meses)"
+  },
+  "2": {
+   "label": "Prioridad 2",
+   "followUp": "Valoración anual (cada 12 meses), salvo decisión profesional o cambio de tratamiento de la EI"
+  },
+  "3": {
+   "label": "Prioridad 3",
+   "followUp": "Valoración según necesidad (decisión profesional o cambio de tratamiento de la EI)"
+  }
+ },
+ "fields": [
+  {
+   "id": "sexo_mujer",
+   "block": "demografica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "peso_obesidad",
+   "block": "demografica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "embarazada",
+   "block": "demografica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "deseo_embarazo",
+   "block": "demografica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "alcoholismo_drogas",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "tabaquismo",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "barreras_comunicacion",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "sin_soporte_social",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "situacion_laboral_dificil",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "calidad_vida_baja",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "problemas_psicologicos",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "deterioro_cognitivo_funcional",
+   "block": "sociosanitaria",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "comorbilidades_2mas",
+   "block": "clinica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "insuficiencia_renal_hepatica",
+   "block": "clinica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "multidisciplinariedad",
+   "block": "clinica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "hospitalizaciones_urgencias",
+   "block": "clinica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "actividad_enfermedad",
+   "block": "clinica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "naive_terapia",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     4
+    ]
+   ]
+  },
+  {
+   "id": "polimedicacion",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "modificacion_regimen",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "medicamento_alto_riesgo",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "interacciones",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "reacciones_adversas",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "falta_adherencia",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     4
+    ]
+   ]
+  },
+  {
+   "id": "medicamento_reciente",
+   "block": "farmacoterapeutica",
+   "appliesTo": "all",
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "comorbilidades_cv_diabetes",
+   "block": "especifica",
+   "appliesTo": [
+    "dermatologica"
+   ],
+   "options": [
+    [
+     "ninguna",
+     0
+    ],
+    [
+     "una",
+     1
+    ],
+    [
+     "mas-una",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "discapacidad_funcional",
+   "block": "especifica",
+   "appliesTo": [
+    "musculo-esqueletica"
+   ],
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "dolor_presente",
+   "block": "especifica",
+   "appliesTo": [
+    "musculo-esqueletica"
+   ],
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "complicaciones_intestinales",
+   "block": "especifica",
+   "appliesTo": [
+    "gastro-intestinal"
+   ],
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "problemas_nutricionales",
+   "block": "especifica",
+   "appliesTo": [
+    "gastro-intestinal"
+   ],
+   "options": [
+    [
+     "no",
+     0
+    ],
+    [
+     "si",
+     1
+    ]
+   ]
+  }
+ ]
+}

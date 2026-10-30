@@ -1,5 +1,13 @@
 # Changelog
 
+## Sin publicar — Casos de referencia (rama `test/casos-referencia`)
+
+Sin cambios en el código de la aplicación.
+- `npm test` (Node, sin dependencias): 12 pruebas de caracterización del motor (`cmo-engine.js` + `config.js`) con valores literales: instantánea de pesos, bloques, grupos de edad y umbrales (`tests/fixtures/modelo-clinico.snapshot.json`); fronteras P3/P2 (17/18) y P2/P1 (30/31); regla de embarazo; variables sin confirmar; bloque específico por tipo de EI.
+- **Hallazgos documentados, no corregidos (requieren decisión clínica):**
+  1. Edad vacía —estado inicial de la app (`edad: ''`)— se clasifica como «≤12 años» y suma 1 punto (`Number('') === 0`).
+  2. El bloque demográfico puede sumar 11 puntos (sexo 1 + edad 13-17 3 + obesidad 2 + embarazo 3 + deseo gestacional 2) frente a su máximo declarado de 9; el total máximo real es 73 frente a los 71 declarados.
+
 ## v1.0.0 — Septiembre 2026
 
 Primera versión modernizada de la herramienta. Repositorio partía vacío; se
