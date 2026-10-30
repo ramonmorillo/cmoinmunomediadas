@@ -5,15 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CMO Inmunomediadas · Estratificación y Atención Farmacéutica</title>
   <meta name="description" content="Herramienta de apoyo a la decisión para la estratificación CMO-MAPEX y el plan de atención farmacéutica en enfermedades inflamatorias inmunomediadas." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3ECMO%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="assets/cmo-ds/favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#14203a" />
   <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/cmo-visual.css" />
+  <script type="application/json" id="cmo-app-meta">
+  {
+    "schema": "cmo-app-meta/1",
+    "id": "cmo-inmunomediadas",
+    "name": "CMO Inmunomediadas",
+    "appVersion": "1",
+    "algorithm": null,
+    "status": "draft",
+    "releaseDate": null,
+    "clinicalReviewDate": null,
+    "credits": [
+      { "role": "Desarrollo digital", "name": "Dr. Ramón Morillo Verdugo" },
+      { "role": "Modelo clínico", "name": "Proyecto MAPEX (SEFH, 2018), adaptado a enfermedades inflamatorias inmunomediadas" }
+    ],
+    "model": "Basado en el modelo CMO: Capacidad, Motivación y Oportunidad.",
+    "website": "https://ramonmorillo.es",
+    "copyright": null,
+    "designSystem": "0.2.0"
+  }
+  </script>
+  <script type="module" src="assets/cmo-ds/cmo-author-signature.js"></script>
 </head>
-<body>
+<body class="cmo-scope">
   <div class="app-shell">
     <div id="app-root"></div>
     <footer class="app-footer">
       <p>Basado en el Proyecto MAPEX · SEFH. Herramienta de apoyo a la decisión clínica: no sustituye el juicio profesional del farmacéutico.</p>
       <p><a href="AI_POLICY.md">Política de uso de IA</a> · <a href="PRIVACY.md">Privacidad</a> · <a href="CLINICAL_MODEL.md">Modelo clínico</a></p>
+      <cmo-author-signature meta="cmo-app-meta"><p>Desarrollo digital: Dr. Ramón Morillo Verdugo · <a href="https://ramonmorillo.es">ramonmorillo.es</a></p></cmo-author-signature>
     </footer>
   </div>
   <div id="modal-layer"></div>

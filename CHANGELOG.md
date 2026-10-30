@@ -1,5 +1,16 @@
 # Changelog
 
+## Sin publicar — CMO Design System 0.2.0 (rama `design/cmo-ds-0.2.0`)
+
+Solo presentación: ningún fichero de `assets/modules/` ni `assets/app.js` modificado.
+- Copia fijada del sistema de diseño en `assets/cmo-ds/` (`CMO-DS-VERSION.json` con SHA-256; `cmo-ds-sync.mjs --check`).
+- `styles.css`: los colores neutros y de marca pasan a tokens CMO; **sin cambios** en `--color-danger/warning/success/info` (colores de nivel de prioridad).
+- `cmo-visual.css` reescrito como tema «Estratos»: franja C/M/O, foco de teclado 3 px `#1f3aa8` (antes `#ffbf47`, ≈1,6:1 sobre blanco), borde de campos `#7b8495` (≥3:1; antes ≈1,3:1), botones de 44 px.
+- Pie: firma `<cmo-author-signature>` desde `cmo-app-meta` (`status: "draft"`, `releaseDate: null` → «pendiente de publicación»; versión `1`, tomada de `APP_VERSION`).
+- `tests/cmo-ds.test.js` (4 pruebas): versión de la firma = código, fecha nunca generada, atribución, integridad de la copia.
+- Pendiente del autor: `APP_VERSION` es `v1` y este CHANGELOG dice `v1.0.0`; decidir la versión de publicación.
+- Accesibilidad previa sin cambios (marcado en `ui.js`, fuera del alcance visual): paso 3 `label`(4) + `select-name`(27); paso 7 `scrollable-region-focusable`(1).
+
 ## Sin publicar — Casos de referencia (rama `test/casos-referencia`)
 
 Sin cambios en el código de la aplicación.

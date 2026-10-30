@@ -1,4 +1,5 @@
-@import url("./cmo-visual.css");
+@import url("./cmo-ds/cmo-tokens.css");
+@import url("./cmo-ds/cmo-components.css");
 
 /* Sistema visual hospitalario — CMO Inmunomediadas.
    Paleta propia (teal/índigo), inspirada en el profesionalismo de
@@ -6,14 +7,14 @@
    tipografía legible, botones grandes. */
 
 :root {
-  --color-bg: #f4f6f8;
-  --color-surface: #ffffff;
-  --color-border: #dde3e8;
-  --color-text: #1f2937;
-  --color-text-muted: #5b6472;
-  --color-primary: #0f766e;
-  --color-primary-dark: #0b5a54;
-  --color-primary-bg: #e6f4f3;
+  --color-bg: var(--cmo-paper);
+  --color-surface: var(--cmo-surface);
+  --color-border: var(--cmo-rule);
+  --color-text: var(--cmo-ink);
+  --color-text-muted: var(--cmo-ink-muted);
+  --color-primary: var(--cmo-brand-strong);
+  --color-primary-dark: var(--cmo-ink);
+  --color-primary-bg: var(--cmo-brand-soft);
   --color-accent: #4338ca;
   --color-danger: #b91c1c;
   --color-danger-bg: #fdecec;
@@ -34,7 +35,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--cmo-font-sans);
   line-height: 1.5;
 }
 

@@ -1,103 +1,32 @@
-/* CMO Suite · capa visual común basada en CMO Migraña */
-:root {
-  --cmo-accent: #bd8cff;
-  --cmo-accent-dark: #6642a5;
-  --cmo-accent-soft: #f1eaff;
-  --cmo-bg-a: #3d286c;
-  --cmo-bg-b: #245d70;
-  --cmo-focus: #ffbf47;
-  --cmo-panel: #f8fbff;
-  --cmo-line: #d8e2f0;
-  --cmo-ink: #172033;
-  --cmo-muted: #5b6880;
-  --cmo-radius: 28px;
-  --cmo-shadow: 0 24px 70px #02081740;
+/* CMO Design System 0.2.0 · tema «Estratos» de CMO Inmunomediadas
+   Se carga después de styles.css. Solo presentación: no altera textos, puntuaciones
+   ni los colores semánticos de nivel (.result-card.level-1/2/3: --color-danger/warning/success).
+   Tokens: assets/cmo-ds/ (copia fijada, ver CMO-DS-VERSION.json). */
+:root { --cmo-accent: #8a5a00; } /* submarca Inmunomediadas: solo identidad, nunca resultados */
+
+.app-header { border-top: 0; border-color: var(--cmo-rule); border-radius: var(--cmo-radius-md); box-shadow: var(--cmo-shadow-1); padding-top: 24px; }
+.app-header__title::before { /* franja de estratos C·M·O (decorativa) */
+  content: ""; display: block; width: 160px; height: 4px; margin-bottom: var(--cmo-space-3);
+  background: linear-gradient(90deg, var(--cmo-c) 0 50%, transparent 50% 52%, var(--cmo-m) 52% 80%, transparent 80% 82%, var(--cmo-o) 82%);
 }
-html {
-  scroll-behavior: smooth;
-}
-body {
-  min-height: 100vh;
-  background: radial-gradient(
-    circle at 15% 8%,
-    var(--cmo-bg-a) 0,
-    #101b33 36%,
-    var(--cmo-bg-b) 100%
-  ) !important;
-  color: var(--cmo-ink);
-}
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(#ffffff08 1px, transparent 1px),
-    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
-  background-size: 44px 44px;
-  pointer-events: none;
-}
-.app-shell {
-  position: relative;
-  max-width: 1240px !important;
-}
-.app-header {
-  padding: 28px !important;
-  border: 1px solid #ffffff2b !important;
-  border-radius: var(--cmo-radius) !important;
-  box-shadow: var(--cmo-shadow) !important;
-  background: linear-gradient(135deg, #493078, #6848a5 55%, #276176) !important;
-  color: #fff;
-}
-.app-header h1 {
-  font-size: clamp(2.5rem, 5vw, 4.5rem) !important;
-  line-height: 0.95;
-  letter-spacing: -0.05em;
-  color: #fff !important;
-}
-.app-header p {
-  color: #f1eaff !important;
-}
-:where(
-  .card,
-  .stepper-wrap,
-  .review-row,
-  .need-chip,
-  .intervention-card,
-  .modal
-) {
-  border-radius: 22px !important;
-  box-shadow: 0 16px 42px #0208171c !important;
-}
-.stepper__item--current .stepper__num,
-.progress__bar {
-  background: var(--cmo-accent-dark) !important;
-}
-button,
-.btn {
-  border-radius: 999px !important;
-}
-input,
-select,
-textarea {
-  border-radius: 13px !important;
-}
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 4px solid var(--cmo-focus) !important;
-  outline-offset: 2px;
-}
-footer.app-footer {
-  border-radius: 22px;
-  background: #f8fbfff0;
-  padding: 18px;
-  color: var(--cmo-ink) !important;
-  box-shadow: 0 16px 42px #0208171c !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  * {
-    scroll-behavior: auto !important;
-    transition: none !important;
-  }
-}
+.app-header__title h1 { font: 600 clamp(1.5rem, 3.5vw, 2rem)/1.15 var(--cmo-font-serif); letter-spacing: -.01em; color: var(--cmo-ink); }
+.card { border-color: var(--cmo-rule); border-radius: var(--cmo-radius-md); box-shadow: var(--cmo-shadow-1); }
+.card h2, .category-title { font-family: var(--cmo-font-serif); font-weight: 600; color: var(--cmo-ink); }
+.card--muted { border-color: var(--cmo-rule); }
+.stepper__item--current .stepper__num { background: var(--cmo-ink); }
+.stepper__item--current .stepper__btn { color: var(--cmo-ink); }
+.stepper__item--done .stepper__num { border-color: var(--cmo-control-border); }
+
+.btn { min-height: 44px; border-radius: var(--cmo-radius-sm); }
+.btn--sm { min-height: 36px; }
+.btn--primary:hover { background: var(--cmo-ink); }
+.btn--secondary { border-color: var(--cmo-rule); color: var(--cmo-brand-strong); }
+input[type="text"], input[type="number"], input[type="date"], select, textarea { border-color: var(--cmo-control-border); border-radius: var(--cmo-radius-sm); }
+input:focus, select:focus, textarea:focus { outline: 0; }
+:is(button, input, select, textarea, a, summary):focus-visible { outline: 3px solid var(--cmo-focus); outline-offset: 2px; }
+
+footer.app-footer { margin-top: var(--cmo-space-7); padding-top: var(--cmo-space-5); border-top: 1px solid var(--cmo-rule);
+  text-align: left; font-size: var(--cmo-text-sm); color: var(--cmo-ink-muted); }
+footer.app-footer a { color: var(--cmo-brand-strong); }
+footer.app-footer cmo-author-signature { margin-top: var(--cmo-space-4); }
+@media print { .app-header__title::before { display: none; } }
