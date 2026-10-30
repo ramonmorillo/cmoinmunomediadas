@@ -110,7 +110,7 @@ export function renderStep2(state) {
   return `
   <section class="card">
     <h2>Importar información clínica</h2>
-    <p class="muted">Pega aquí el texto de la historia clínica (antecedentes, tratamiento, analíticas, actividad de la enfermedad, adherencia, situación social…). La IA extraerá lo que encuentre; todo debe ser revisado por ti antes de usarse en el cálculo.</p>
+    <p class="muted">Pega aquí el texto de la historia clínica (antecedentes, tratamiento, analíticas, actividad de la enfermedad, adherencia, situación social…). La extracción automática (servicio de IA si está configurado; si no, heurística local de demostración) propondrá lo que encuentre; todo debe ser revisado por ti antes de usarse en el cálculo.</p>
     ${renderPrivacyBanner()}
     <textarea id="narrative-text" rows="14" placeholder="Pega aquí el texto de la historia clínica…">${esc(text)}</textarea>
     <div class="textarea-meta">
@@ -127,7 +127,7 @@ export function renderStep2(state) {
   </section>
   <div class="step-actions step-actions--split">
     <button type="button" class="btn btn--ghost" data-action="go-step-1">← Volver</button>
-    <button type="button" class="btn btn--secondary" data-action="skip-to-manual">Continuar sin IA (manual) →</button>
+    <button type="button" class="btn btn--secondary" data-action="skip-to-manual">Continuar sin extracción (manual) →</button>
     ${state.lastExtraction ? '<button type="button" class="btn btn--primary" data-action="go-step-3">Revisar información extraída →</button>' : ''}
   </div>`;
 }
@@ -221,7 +221,7 @@ export function renderStep3(state) {
 
   return `
   <section class="card card--muted">
-    <p>Revisa cada variable identificada. La IA solo <strong>sugiere</strong>: ninguna variable dudosa se da por confirmada automáticamente. Corrige el valor si es necesario antes de aceptar.</p>
+    <p>Revisa cada variable identificada. La extracción automática solo <strong>sugiere</strong>: ninguna variable dudosa se da por confirmada automáticamente. Corrige el valor si es necesario antes de aceptar.</p>
   </section>
   ${section('found', 'Información encontrada con alta confianza', true)}
   ${section('uncertain', 'Información dudosa o incompleta', false)}
@@ -459,7 +459,7 @@ export function renderStep7(state, { executiveSummary, clinicalReport, extractio
 
   <section class="card">
     <details>
-      <summary>Informe de extracción por IA (trazabilidad)</summary>
+      <summary>Informe de extracción automática (trazabilidad)</summary>
       <pre class="report-pre">${esc(extractionReport)}</pre>
       <button type="button" class="btn btn--sm btn--secondary" data-action="copy-extraction-report">Copiar informe de extracción</button>
     </details>
