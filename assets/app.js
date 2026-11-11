@@ -17,15 +17,24 @@ import {
 import { extractClinicalVariables } from './modules/clinical-extraction-service.js';
 import {
   buildExecutiveSummary,
-  buildClinicalReport,
   buildExtractionReport,
-  buildHceSummary,
-  copyToClipboard,
-  downloadTextFile,
-  reportFileName
+  buildHceSummary
 } from './modules/export-layer.js';
 import { getIntervention, INTERVENTIONS_CATALOG } from './modules/interventions-catalog.js';
 import * as ui from './modules/ui.js';
+import { APP_VERSION } from './modules/config.js';
+import * as A from './modules/assessment.js';
+import { createReport, reportToText, reportToHtml, exportEnvelope, parseEnvelope, validateReport } from './cmo-ds/cmo-report.js';
+import { reportToPdf } from './cmo-ds/cmo-pdf.js';
+import { toast, confirmDialog, guardUnsaved, copyText, download, printHtml, safeFilename } from './cmo-ds/cmo-flow.js';
+
+const VERSION = (/v(\d+(?:\.\d+)*)/.exec(APP_VERSION) || [])[1] || '';
+let dirty = false; // hay datos sin guardar ni exportar
+guardUnsaved(() => dirty);
+const recompute = () => { recomputeStratification(state); dirty = true; };
+const evaluation = () => A.evaluate(state);
+const currentReport = (opts) => createReport({ ...A.buildReportInput(state, evaluation(), { version: VERSION, ...opts }) });
+const fileBase = () => safeFilename('CMO-Inmunomediadas', state.context.pacienteId || state.context.hospital, state.context.fechaEvaluacion);
 
 let state = createInitialState();
 let activeModal = null; // 'reset' | 'load' | 'custom-intervention' | null
@@ -37,7 +46,7 @@ function render() {
   root.innerHTML = `
     ${ui.renderHeader()}
     <nav class="stepper-wrap">${ui.renderStepper(state)}</nav>
-    <main class="app-main" id="step-content">
+    <main class="app-main" id="step-content" tabindex="-1">
       ${renderCurrentStep()}
     </main>
   `;
@@ -55,14 +64,15 @@ function renderCurrentStep() {
     case 4:
       return ui.renderStep4(state);
     case 5:
-      return ui.renderStep5(state);
+      return ui.renderStep5(state, evaluation());
     case 6:
       return ui.renderStep6(state);
     case 7:
       return ui.renderStep7(state, {
-        executiveSummary: buildExecutiveSummary(state),
-        clinicalReport: buildClinicalReport(state),
-        extractionReport: buildExtractionReport(state)
+        executiveSummary: buildExecutiveSummary(state, evaluation()),
+        clinicalReport: reportToText(currentReport()),
+        extractionReport: buildExtractionReport(state),
+        provisional: evaluation().provisional
       });
     default:
       return '';
@@ -77,30 +87,40 @@ function renderModal() {
   if (activeModal === 'reset') modalLayer.innerHTML = ui.renderResetModal();
   else if (activeModal === 'load') modalLayer.innerHTML = ui.renderLoadModal(loadCaseLibrary());
   else if (activeModal === 'custom-intervention') modalLayer.innerHTML = ui.renderCustomInterventionModal();
+  else if (activeModal === 'examples') modalLayer.innerHTML = ui.renderExamplesModal(Object.keys(EXAMPLE_CASES));
+  modalLayer.querySelector('.modal button, .modal textarea, .modal input')?.focus();
 }
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && activeModal) { activeModal = null; renderModal(); }
+});
 
 function goToStep(n) {
   state.step = n;
   state.highestStepReached = Math.max(state.highestStepReached || 1, n);
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('step-content')?.focus({ preventScroll: true });
 }
 
 function validateStep1() {
   const missing = CONTEXT_FIELDS.filter((f) => f.required && !String(state.context[f.id] || '').trim());
   if (missing.length > 0) {
-    alert('Por favor completa todos los campos obligatorios (*) antes de continuar:\n' + missing.map((f) => '· ' + f.label).join('\n'));
+    toast('Completa los campos obligatorios (*): ' + missing.map((f) => f.label).join(', '), { type: 'error' });
+    return false;
+  }
+  if (A.cleanAge(state.context.edad) === undefined) {
+    toast('La edad debe ser un número entre 0 y 120 años.', { type: 'error' });
+    return false;
+  }
+  if (A.looksLikeNationalId(state.context.pacienteId)) {
+    toast('El identificador parece un DNI: use un código seudonimizado.', { type: 'error' });
     return false;
   }
   return true;
 }
 
 function showToast(text) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = text;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2600);
+  toast(text, { type: 'info', timeout: 4000 });
 }
 
 // ------------------------------------------------------------- Extracción --
@@ -125,6 +145,7 @@ function needTitleFor(catalogItem) {
 }
 
 function toggleIntervention(catalogId, { skipRender = false } = {}) {
+  dirty = true;
   const existingIdx = state.selectedInterventions.findIndex((i) => i.catalogId === catalogId);
   if (existingIdx >= 0) {
     state.selectedInterventions.splice(existingIdx, 1);
@@ -138,6 +159,7 @@ function toggleIntervention(catalogId, { skipRender = false } = {}) {
       text: item.text,
       dimension: item.dimension,
       needTitle: needTitleFor(item),
+      status: 'planned',
       objective: '',
       priority: item.recommendedLevels.includes(state.stratification ? state.stratification.level : -1) ? 'alta' : '',
       responsible: '',
@@ -178,11 +200,11 @@ document.addEventListener('click', (e) => {
       goToStep(4);
       break;
     case 'go-step-5':
-      recomputeStratification(state);
+      recompute();
       goToStep(5);
       break;
     case 'calculate-and-go-5':
-      recomputeStratification(state);
+      recompute();
       goToStep(5);
       break;
     case 'go-step-6':
@@ -202,6 +224,31 @@ document.addEventListener('click', (e) => {
     case 'try-examples':
       pickExampleCase();
       break;
+    case 'pick-example': {
+      const text = EXAMPLE_CASES[actionEl.dataset.example];
+      if (text) { state.narrativeText = text; dirty = true; }
+      activeModal = null;
+      render();
+      break;
+    }
+    case 'bulk-select-all':
+      actionEl.closest('[data-review-group]')?.querySelectorAll('[data-bulk-select]').forEach((cb) => { cb.checked = true; });
+      break;
+    case 'apply-override': {
+      const level = document.getElementById('override-level')?.value || '';
+      if (!level) {
+        state.override = null;
+      } else {
+        const draft = { level: Number(level), motive: document.getElementById('override-motive')?.value || '', justification: document.getElementById('override-justification')?.value || '' };
+        const { error } = A.checkOverride(draft, state.stratification.level);
+        if (error) { toast(error, { type: 'error' }); return; }
+        state.override = draft;
+      }
+      dirty = true;
+      render();
+      toast(state.override ? 'Modificación profesional aplicada; el resultado automático se conserva.' : 'Modificación retirada.');
+      break;
+    }
     case 'analyze-text':
       runAnalysis();
       break;
@@ -212,7 +259,7 @@ document.addEventListener('click', (e) => {
       const control = row ? row.querySelector('[data-review-value],[data-manual-value]') : null;
       const value = control ? control.value : '';
       confirmVariable(state, fieldId, value === '' ? null : value, { isContext });
-      recomputeStratification(state);
+      recompute();
       render();
       break;
     }
@@ -220,7 +267,7 @@ document.addEventListener('click', (e) => {
       const fieldId = actionEl.dataset.field;
       const isContext = actionEl.dataset.isContext === 'true';
       markVariableUnknown(state, fieldId, { isContext });
-      recomputeStratification(state);
+      recompute();
       render();
       break;
     }
@@ -235,16 +282,18 @@ document.addEventListener('click', (e) => {
         const value = control ? control.value : '';
         confirmVariable(state, fieldId, value === '' ? null : value, { isContext });
       });
-      recomputeStratification(state);
+      recompute();
       render();
       break;
     }
     case 'open-reset':
+      if (!dirty) { state = createInitialState(); render(); break; }
       activeModal = 'reset';
       renderModal();
       break;
     case 'confirm-reset':
       state = createInitialState();
+      dirty = false;
       activeModal = null;
       render();
       break;
@@ -260,7 +309,8 @@ document.addEventListener('click', (e) => {
       const id = Number(actionEl.dataset.caseId);
       const found = loadCaseLibrary().find((c) => c.id === id);
       if (found) {
-        state = restoreStateFromCase(found);
+        state = restoreStateFromCase({ ...found, ...A.sanitizeCase(found) });
+        dirty = false;
         activeModal = null;
         render();
       }
@@ -268,19 +318,24 @@ document.addEventListener('click', (e) => {
     }
     case 'delete-case': {
       const id = Number(actionEl.dataset.caseId);
-      deleteCaseFromLibrary(id);
-      renderModal();
+      confirmDialog({ title: 'Eliminar caso guardado', message: 'El caso se eliminará de este navegador y no se podrá recuperar.', confirmLabel: 'Eliminar', danger: true })
+        .then((ok) => { if (ok) { deleteCaseFromLibrary(id); renderModal(); toast('Caso eliminado.'); } });
       break;
     }
     case 'save-case': {
       const input = document.getElementById('case-name-input');
       const name = input && input.value.trim();
       if (!name) {
-        alert('Introduce un nombre para el caso.');
+        toast('Introduce un nombre para el caso.', { type: 'error' });
         return;
       }
-      saveCaseToLibrary(state, name);
-      showToast('✓ Caso guardado (solo datos estructurados, sin texto de la HCE).');
+      try {
+        saveCaseToLibrary(state, name);
+        dirty = false;
+        showToast('Caso guardado (solo datos estructurados, sin texto de la HCE).');
+      } catch (err) {
+        toast('No se pudo guardar el caso en este navegador (almacenamiento no disponible o lleno). Exporte el JSON.', { type: 'error' });
+      }
       break;
     }
     case 'toggle-intervention':
@@ -298,6 +353,7 @@ document.addEventListener('click', (e) => {
     case 'remove-intervention': {
       const localId = actionEl.dataset.localId;
       state.selectedInterventions = state.selectedInterventions.filter((i) => i.localId !== localId);
+      dirty = true;
       render();
       break;
     }
@@ -309,7 +365,7 @@ document.addEventListener('click', (e) => {
       const text = document.getElementById('custom-iv-text')?.value.trim();
       const dimension = document.getElementById('custom-iv-dimension')?.value;
       if (!text) {
-        alert('Describe la intervención antes de añadirla.');
+        toast('Describe la intervención antes de añadirla.', { type: 'error' });
         return;
       }
       state.selectedInterventions.push({
@@ -323,26 +379,47 @@ document.addEventListener('click', (e) => {
         priority: '',
         responsible: '',
         followUp: '',
-        notes: ''
+        notes: '',
+        status: 'planned'
       });
+      dirty = true;
       activeModal = null;
       render();
       break;
     }
     case 'copy-report':
-      copyToClipboard(buildClinicalReport(state)).then(() => showToast('✓ Informe copiado al portapapeles.'));
+      copyText(reportToText(currentReport())).then((ok) => toast(ok ? 'Informe copiado al portapapeles.' : 'No se pudo copiar: use «Descargar .txt».', { type: ok ? 'info' : 'error' }));
       break;
     case 'download-report':
-      downloadTextFile(reportFileName(state, 'txt'), buildClinicalReport(state));
+      download(`${fileBase()}.txt`, reportToText(currentReport()));
       break;
-    case 'print-report':
-      window.print();
+    case 'download-pdf':
+      download(`${fileBase()}.pdf`, reportToPdf(currentReport()), 'application/pdf');
+      toast('PDF generado en el navegador.');
       break;
+    case 'print-report': {
+      const r = currentReport();
+      printHtml(reportToHtml(r), r.title);
+      break;
+    }
+    case 'export-json': {
+      const report = currentReport({ includeFreeText: false });
+      const errors = validateReport(report);
+      if (errors.length) { toast(errors.join(' '), { type: 'error' }); break; }
+      const env = exportEnvelope({
+        app: { id: A.APP_ID, name: A.TOOL_NAME, version: VERSION }, exportedAt: new Date().toISOString(), report,
+        data: A.caseData({ ...state, context: { ...state.context, diagnosticoEspecifico: '', tratamiento: '', situacionClinica: '' } }), dataSchema: A.CASE_SCHEMA
+      });
+      download(`${fileBase()}.json`, JSON.stringify(env, null, 2), 'application/json');
+      dirty = false;
+      toast('JSON exportado (sin texto libre ni historia clínica).');
+      break;
+    }
     case 'copy-hce':
-      copyToClipboard(buildHceSummary(state)).then(() => showToast('✓ Resumen para la historia clínica copiado.'));
+      copyText(buildHceSummary(state, evaluation())).then((ok) => showToast(ok ? 'Resumen para la historia clínica copiado.' : 'No se pudo copiar el resumen.'));
       break;
     case 'copy-extraction-report':
-      copyToClipboard(buildExtractionReport(state)).then(() => showToast('✓ Informe de extracción copiado.'));
+      copyText(buildExtractionReport(state)).then((ok) => showToast(ok ? 'Informe de extracción copiado.' : 'No se pudo copiar el informe.'));
       break;
     default:
       break;
@@ -350,14 +427,8 @@ document.addEventListener('click', (e) => {
 });
 
 function pickExampleCase() {
-  const keys = Object.keys(EXAMPLE_CASES);
-  const menu = keys.map((k, i) => `${i + 1}. ${k}`).join('\n');
-  const choice = prompt(`Elige un caso de ejemplo (escribe el número):\n${menu}`, '1');
-  const idx = Number(choice) - 1;
-  if (idx >= 0 && idx < keys.length) {
-    state.narrativeText = EXAMPLE_CASES[keys[idx]];
-    render();
-  }
+  activeModal = 'examples';
+  renderModal();
 }
 
 // -------------------------------------------------- Inputs sin re-render --
@@ -365,10 +436,12 @@ document.addEventListener('input', (e) => {
   const t = e.target;
   if (t.dataset.contextField) {
     state.context[t.dataset.contextField] = t.value;
+    dirty = true;
     return;
   }
   if (t.id === 'narrative-text') {
     state.narrativeText = t.value;
+    dirty = true;
     const meta = t.parentElement.querySelector('.textarea-meta__actions .btn--primary');
     const counter = t.parentElement.querySelector('.textarea-meta span');
     if (counter) counter.textContent = `${t.value.length.toLocaleString('es-ES')} caracteres`;
@@ -377,22 +450,38 @@ document.addEventListener('input', (e) => {
   }
   if (t.dataset.ivField) {
     const iv = state.selectedInterventions.find((i) => i.localId === t.dataset.localId);
-    if (iv) iv[t.dataset.ivField] = t.value;
+    if (iv) { iv[t.dataset.ivField] = t.value; dirty = true; }
     return;
   }
   if (t.id === 'report-observations') {
     state.reportObservations = t.value;
+    dirty = true;
     const pre = document.getElementById('clinical-report-pre');
-    if (pre) pre.textContent = buildClinicalReport(state);
+    if (pre) pre.textContent = reportToText(currentReport());
     return;
   }
 });
 
-document.addEventListener('change', (e) => {
+document.addEventListener('change', async (e) => {
   const t = e.target;
   if (t.dataset.ivField) {
     const iv = state.selectedInterventions.find((i) => i.localId === t.dataset.localId);
-    if (iv) iv[t.dataset.ivField] = t.value;
+    if (iv) { iv[t.dataset.ivField] = t.value; dirty = true; }
+  }
+  if (t.id === 'plan-next-review') { state.plan.nextReview = t.value; dirty = true; }
+  if (t.id === 'import-json') {
+    const file = t.files && t.files[0];
+    t.value = '';
+    if (!file) return;
+    if (dirty && !(await confirmDialog({ title: 'Importar caso', message: 'Hay cambios sin guardar que se perderán al importar.', confirmLabel: 'Importar', danger: true }))) return;
+    const parsed = parseEnvelope(await file.text(), { appId: A.APP_ID });
+    if (!parsed.ok) { toast(parsed.error, { type: 'error' }); return; }
+    if (parsed.value.dataSchema !== A.CASE_SCHEMA) { toast('Versión de esquema no compatible con esta herramienta.', { type: 'error' }); return; }
+    const clean = A.sanitizeCase(parsed.value.data);
+    state = restoreStateFromCase(clean);
+    dirty = false;
+    render();
+    toast('Caso importado y recalculado con el motor actual; revise las variables antes de usarlo.');
   }
 });
 

@@ -10,6 +10,7 @@
 import { STORAGE_KEY, CASE_LIBRARY_KEY, CONTEXT_FIELDS, scoredFieldsForDiseaseType } from './config.js';
 import { computeStratification } from './cmo-engine.js';
 import { computeNeeds } from './needs-mapper.js';
+import { cleanAge } from './assessment.js';
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -41,7 +42,11 @@ export function createInitialState() {
     stratification: null,
     needs: null,
     selectedInterventions: [], // ver addSelectedIntervention
-    reportObservations: ''
+    reportObservations: '',
+    // Modificación profesional del nivel ({level, motive, justification}) y plan de seguimiento.
+    // El resultado automático del motor nunca se sobrescribe: la modificación se anota aparte.
+    override: null,
+    plan: { nextReview: '', notes: '' }
   };
 }
 
@@ -114,7 +119,7 @@ export function getConfirmedClinicalValues(state) {
 
 export function recomputeStratification(state) {
   const confirmed = getConfirmedClinicalValues(state);
-  state.stratification = computeStratification(confirmed, state.context.tipoEI, state.context.edad);
+  state.stratification = computeStratification(confirmed, state.context.tipoEI, cleanAge(state.context.edad));
   state.needs = computeNeeds(confirmed);
   return state;
 }
@@ -174,7 +179,9 @@ export function serializeCaseForStorage(state, nombre) {
     ),
     stratification: state.stratification,
     selectedInterventions: state.selectedInterventions,
-    reportObservations: state.reportObservations
+    reportObservations: state.reportObservations,
+    override: state.override || null,
+    plan: state.plan || { nextReview: '', notes: '' }
   };
 }
 
@@ -207,11 +214,12 @@ export function restoreStateFromCase(savedCase) {
   Object.entries(savedCase.variables || {}).forEach(([id, v]) => {
     state.variables[id] = { ...emptyVariableState(), ...v };
   });
-  state.stratification = savedCase.stratification || null;
   state.selectedInterventions = savedCase.selectedInterventions || [];
   state.reportObservations = savedCase.reportObservations || '';
-  const confirmed = getConfirmedClinicalValues(state);
-  state.needs = computeNeeds(confirmed);
+  state.override = savedCase.override || null;
+  state.plan = savedCase.plan || { nextReview: '', notes: '' };
+  // El resultado no se toma del caso guardado: siempre se recalcula con el motor vigente.
+  recomputeStratification(state);
   state.step = 5;
   state.highestStepReached = 7;
   return state;

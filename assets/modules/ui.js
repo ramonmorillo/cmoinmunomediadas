@@ -6,6 +6,8 @@
 import { BLOCKS, CONTEXT_FIELDS, PRIVACY_NOTICE, scoredFieldsForDiseaseType } from './config.js';
 import { completionStats } from './data-layer.js';
 import { AVAILABILITY_TIERS, CATEGORY_LABELS, INTERVENTIONS_CATALOG } from './interventions-catalog.js';
+import { PRIORITY_CONFIG } from './config.js';
+import { INTERVENTION_STATUSES, MIN_JUSTIFICATION, interventionStatus } from './assessment.js';
 
 export const STEPS = [
   { id: 1, label: 'Nueva estratificación' },
@@ -44,6 +46,7 @@ export function renderHeader() {
     </div>
     <div class="app-header__actions">
       <button type="button" class="btn btn--ghost" data-action="open-load-case">Cargar caso</button>
+      <label class="btn btn--ghost cmo-file-btn">Importar JSON<input type="file" accept=".json,application/json" id="import-json" class="cmo-visually-hidden"/></label>
       <button type="button" class="btn btn--danger-outline" data-action="open-reset">Nueva estratificación</button>
     </div>
   </header>`;
@@ -69,7 +72,8 @@ export function renderStep1(state) {
     if (f.type === 'textarea') {
       return `<textarea id="ctx-${id}" data-context-field="${id}" rows="3" ${opts.placeholder ? `placeholder="${esc(opts.placeholder)}"` : ''}>${value}</textarea>`;
     }
-    return `<input id="ctx-${id}" data-context-field="${id}" type="${f.type}" value="${value}" ${opts.placeholder ? `placeholder="${esc(opts.placeholder)}"` : ''}/>`;
+    const range = id === 'edad' ? 'min="0" max="120" step="1" inputmode="numeric"' : '';
+    return `<input id="ctx-${id}" data-context-field="${id}" type="${f.type}" value="${value}" ${range} ${opts.placeholder ? `placeholder="${esc(opts.placeholder)}"` : ''}/>`;
   };
 
   return `
@@ -166,8 +170,8 @@ function renderReviewRow(field, varState, isContext, allowBulk) {
   const evidenceId = `evid-${isContext ? 'ctx-' : ''}${field.id}`;
   const isSelect = field.type !== 'text' && field.type !== 'textarea' && field.type !== 'number';
   const valueControl = isSelect
-    ? fieldOptionsSelect(field, varState.value, `data-review-value data-field="${field.id}" data-is-context="${isContext}"`)
-    : `<input type="${field.type === 'number' ? 'number' : 'text'}" data-review-value data-field="${field.id}" data-is-context="${isContext}" value="${esc(varState.value)}"/>`;
+    ? fieldOptionsSelect(field, varState.value, `data-review-value data-field="${field.id}" data-is-context="${isContext}" aria-label="${esc(field.label)}"`)
+    : `<input type="${field.type === 'number' ? 'number' : 'text'}" data-review-value data-field="${field.id}" data-is-context="${isContext}" aria-label="${esc(field.label)}" value="${esc(varState.value)}"/>`;
 
   return `<div class="review-row ${varState.confirmed ? 'review-row--confirmed' : ''}" data-review-row="${field.id}">
     <div class="review-row__main">
@@ -185,7 +189,7 @@ function renderReviewRow(field, varState, isContext, allowBulk) {
         ${varState.aiReasoning ? `<p class="muted">${esc(varState.aiReasoning)}</p>` : ''}
       </details>` : varState.aiReasoning ? `<p class="muted review-row__reasoning">${esc(varState.aiReasoning)}</p>` : ''}
     <div class="review-row__actions">
-      ${allowBulk ? `<label class="checkbox-inline"><input type="checkbox" data-bulk-select data-field="${field.id}" data-is-context="${isContext}" checked/> Incluir en confirmación</label>` : ''}
+      ${allowBulk ? `<label class="checkbox-inline"><input type="checkbox" data-bulk-select data-field="${field.id}" data-is-context="${isContext}"/> Incluir en confirmación</label>` : ''}
       <button type="button" class="btn btn--sm btn--primary" data-action="confirm-field" data-field="${field.id}" data-is-context="${isContext}">Aceptar</button>
       <button type="button" class="btn btn--sm btn--ghost" data-action="unknown-field" data-field="${field.id}" data-is-context="${isContext}">Marcar desconocida</button>
     </div>
@@ -213,7 +217,7 @@ export function renderStep3(state) {
     return `<section class="card" data-review-group="${key}">
       <div class="card__header">
         <h3>${title} <span class="muted">(${groups[key].length})</span></h3>
-        ${allowBulk ? `<button type="button" class="btn btn--sm btn--secondary" data-action="bulk-confirm" data-group="${key}">Confirmar seleccionadas</button>` : ''}
+        ${allowBulk ? `<div class="btn-group"><button type="button" class="btn btn--sm btn--ghost" data-action="bulk-select-all">Marcar todas</button><button type="button" class="btn btn--sm btn--secondary" data-action="bulk-confirm" data-group="${key}">Confirmar seleccionadas</button></div>` : ''}
       </div>
       ${groups[key].map((r) => renderReviewRow(r.field, r.varState, r.isContext, allowBulk)).join('')}
     </section>`;
@@ -279,19 +283,27 @@ export function renderStep4(state) {
 }
 
 // ---------------------------------------------------------------- Paso 5 --
-export function renderStep5(state) {
+export function renderStep5(state, ev) {
   const s = state.stratification;
   if (!s) return '<p>No hay resultado calculado todavía.</p>';
-  const levelClass = `level-${s.level}`;
+  const levelClass = `level-${ev.finalLevel}`;
   return `
   <section class="card result-card ${levelClass}">
     <div class="result-card__main">
-      <h2>NIVEL DE PRIORIDAD ${s.level}</h2>
+      <h2>NIVEL DE PRIORIDAD ${ev.finalLevel}${ev.provisional ? ' (provisional)' : ''}</h2>
       <p class="result-card__score">Puntuación: ${s.total}/${s.maxPossible} puntos</p>
-      <p class="muted">Seguimiento: ${esc(s.followUp)}</p>
+      <p class="muted">Seguimiento: ${esc(PRIORITY_CONFIG[ev.finalLevel].followUp)}</p>
+      ${ev.override ? `<p class="tag tag--alert">Modificado por el profesional: el modelo calculó ${esc(s.levelLabel)} (${s.total} puntos). El resultado automático se conserva en el informe.</p>` : ''}
       ${s.pregnancyTrigger ? '<p class="tag tag--alert">⚠️ Prioridad 1 aplicada por regla especial de embarazo/deseo gestacional</p>' : ''}
     </div>
   </section>
+
+  ${ev.provisional ? `<section class="card cmo-provisional" role="status" data-provisional>
+    <h3>Resultado provisional</h3>
+    <p>${ev.pending.length ? `Hay <strong>${ev.pending.length}</strong> variable(s) sin confirmar` : 'La edad no es válida o falta'}${ev.pending.length && ev.ageMissing ? ' y falta la edad' : ''}. Una variable sin confirmar <strong>no se interpreta como «No»</strong>: no puntúa. Si todas resultaran positivas, la puntuación podría llegar a <strong>${ev.upper.total} puntos</strong> (${esc(ev.upper.levelLabel)}); es una cota orientativa que no valora la compatibilidad clínica entre variables.</p>
+    ${ev.pending.length ? `<details><summary>Variables pendientes (${ev.pending.length})</summary><ul class="factor-list">${ev.pending.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul></details>` : ''}
+    <button type="button" class="btn btn--sm btn--secondary" data-action="go-step-4">Completar información</button>
+  </section>` : ''}
 
   <section class="card">
     <h3>Desglose por bloque</h3>
@@ -314,6 +326,28 @@ export function renderStep5(state) {
     <ul class="factor-list">
       ${s.contributingFactors.map((f) => `<li><strong>${esc(f.label)}</strong>: ${esc(f.optionLabel)} — ${f.points} puntos</li>`).join('')}
     </ul>`}
+  </section>
+
+  <section class="card" data-override>
+    <h3>Modificación profesional del nivel (opcional)</h3>
+    <p class="muted">El juicio profesional puede modificar el nivel calculado. Se exige justificación (mínimo ${MIN_JUSTIFICATION} caracteres) y el resultado automático del modelo se conserva siempre en el informe.</p>
+    <div class="form-grid form-grid--3">
+      <label>Nivel final
+        <select id="override-level">
+          <option value="">Sin modificar (nivel calculado: ${s.level})</option>
+          ${[1, 2, 3].filter((n) => n !== s.level).map((n) => `<option value="${n}" ${state.override && Number(state.override.level) === n ? 'selected' : ''}>Prioridad ${n}</option>`).join('')}
+        </select>
+      </label>
+      <label>Motivo breve
+        <input type="text" id="override-motive" maxlength="200" value="${esc(state.override?.motive)}"/>
+      </label>
+      <label class="form-grid__wide">Justificación clínica *
+        <textarea id="override-justification" rows="3" maxlength="2000">${esc(state.override?.justification)}</textarea>
+      </label>
+    </div>
+    ${ev.overrideError && state.override ? `<p class="tag tag--alert" role="alert">${esc(ev.overrideError)}</p>` : ''}
+    ${ev.override?.isReduction ? '<p class="tag tag--alert">La modificación reduce la intensidad asistencial respecto al modelo: se recomienda revisión por el equipo.</p>' : ''}
+    <button type="button" class="btn btn--sm btn--secondary" data-action="apply-override">Aplicar modificación</button>
   </section>
 
   <div class="step-actions step-actions--split">
@@ -387,6 +421,15 @@ export function renderStep6(state) {
     ${state.selectedInterventions.length === 0 ? '<p class="muted">Aún no has seleccionado ninguna intervención.</p>' : state.selectedInterventions.map(renderSelectedInterventionForm).join('')}
   </section>
 
+  <section class="card">
+    <h3>Plan de seguimiento</h3>
+    <div class="form-grid">
+      <label>Próxima revisión
+        <input type="date" id="plan-next-review" value="${esc(state.plan?.nextReview)}"/>
+      </label>
+    </div>
+  </section>
+
   <div class="step-actions step-actions--split">
     <button type="button" class="btn btn--ghost" data-action="go-step-5">← Volver</button>
     <button type="button" class="btn btn--primary" data-action="go-step-7">Generar informe final →</button>
@@ -402,6 +445,11 @@ function renderSelectedInterventionForm(iv) {
     <div class="form-grid form-grid--3">
       <label>Objetivo farmacoterapéutico
         <input type="text" data-iv-field="objective" data-local-id="${iv.localId}" value="${esc(iv.objective)}" placeholder="Ej. Mejorar la adherencia al tratamiento biológico"/>
+      </label>
+      <label>Estado de la actuación
+        <select data-iv-field="status" data-local-id="${iv.localId}">
+          ${['planned', 'done', 'not_applicable'].map((k) => `<option value="${k}" ${interventionStatus(iv) === k ? 'selected' : ''}>${esc(INTERVENTION_STATUSES[k])}</option>`).join('')}
+        </select>
       </label>
       <label>Prioridad
         <select data-iv-field="priority" data-local-id="${iv.localId}">
@@ -425,12 +473,14 @@ function renderSelectedInterventionForm(iv) {
 }
 
 // ---------------------------------------------------------------- Paso 7 --
-export function renderStep7(state, { executiveSummary, clinicalReport, extractionReport }) {
+export function renderStep7(state, { executiveSummary, clinicalReport, extractionReport, provisional }) {
   return `
   <section class="card card--muted">
     <h3>Resumen para el farmacéutico</h3>
     <p>${esc(executiveSummary)}</p>
   </section>
+
+  ${provisional ? '<section class="card cmo-provisional" role="status"><p><strong>Informe provisional:</strong> hay variables sin confirmar. El informe lo indica en cabecera y en advertencias.</p></section>' : ''}
 
   <section class="card">
     <div class="card__header">
@@ -438,10 +488,12 @@ export function renderStep7(state, { executiveSummary, clinicalReport, extractio
       <div class="btn-group">
         <button type="button" class="btn btn--sm btn--secondary" data-action="copy-report">Copiar informe</button>
         <button type="button" class="btn btn--sm btn--secondary" data-action="download-report">Descargar .txt</button>
+        <button type="button" class="btn btn--sm btn--secondary" data-action="download-pdf">Descargar PDF</button>
         <button type="button" class="btn btn--sm btn--secondary" data-action="print-report">Imprimir</button>
+        <button type="button" class="btn btn--sm btn--secondary" data-action="export-json">Exportar JSON</button>
       </div>
     </div>
-    <pre class="report-pre" id="clinical-report-pre">${esc(clinicalReport)}</pre>
+    <pre class="report-pre" id="clinical-report-pre" tabindex="0">${esc(clinicalReport)}</pre>
   </section>
 
   <section class="card">
@@ -460,7 +512,7 @@ export function renderStep7(state, { executiveSummary, clinicalReport, extractio
   <section class="card">
     <details>
       <summary>Informe de extracción automática (trazabilidad)</summary>
-      <pre class="report-pre">${esc(extractionReport)}</pre>
+      <pre class="report-pre" tabindex="0">${esc(extractionReport)}</pre>
       <button type="button" class="btn btn--sm btn--secondary" data-action="copy-extraction-report">Copiar informe de extracción</button>
     </details>
   </section>
@@ -470,7 +522,9 @@ export function renderStep7(state, { executiveSummary, clinicalReport, extractio
       <h3>Guardar este caso</h3>
     </div>
     <div class="inline-form">
-      <input type="text" id="case-name-input" placeholder="Nombre para identificar el caso guardado"/>
+      <label class="cmo-grow">Nombre del caso
+        <input type="text" id="case-name-input" placeholder="Nombre para identificar el caso guardado"/>
+      </label>
       <button type="button" class="btn btn--secondary" data-action="save-case">Guardar caso (solo datos estructurados, sin texto de la HCE)</button>
     </div>
   </section>
@@ -484,8 +538,8 @@ export function renderStep7(state, { executiveSummary, clinicalReport, extractio
 // -------------------------------------------------------------- Modales --
 export function renderResetModal() {
   return `<div class="modal-backdrop" data-modal="reset">
-    <div class="modal">
-      <h3>⚠️ Confirmar nueva estratificación</h3>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">⚠️ Confirmar nueva estratificación</h3>
       <p>Se borrarán la historia clínica pegada, la extracción realizada, todas las variables, confirmaciones, la puntuación, el estrato y el informe generado. Esta acción no se puede deshacer.</p>
       <div class="modal__actions">
         <button type="button" class="btn btn--ghost" data-action="close-modal">Cancelar</button>
@@ -497,13 +551,13 @@ export function renderResetModal() {
 
 export function renderLoadModal(cases) {
   return `<div class="modal-backdrop" data-modal="load">
-    <div class="modal modal--wide">
-      <h3>Cargar caso guardado</h3>
+    <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">Cargar caso guardado</h3>
       ${cases.length === 0 ? '<p class="muted">No hay casos guardados en este navegador.</p>' : `<div class="case-list">
         ${cases.map((c) => `<div class="case-row">
           <div>
             <strong>${esc(c.nombre)}</strong>
-            <span class="muted">${new Date(c.fecha).toLocaleDateString('es-ES')} · ${c.stratification ? c.stratification.levelLabel : ''}</span>
+            <span class="muted">${new Date(c.fecha).toLocaleDateString('es-ES')} · ${c.stratification ? esc(c.stratification.levelLabel) : ''}</span>
           </div>
           <div class="btn-group">
             <button type="button" class="btn btn--sm btn--primary" data-action="load-case" data-case-id="${c.id}">Cargar</button>
@@ -520,8 +574,8 @@ export function renderLoadModal(cases) {
 
 export function renderCustomInterventionModal() {
   return `<div class="modal-backdrop" data-modal="custom-intervention">
-    <div class="modal">
-      <h3>Añadir intervención personalizada</h3>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">Añadir intervención personalizada</h3>
       <div class="form-grid">
         <label>Descripción de la intervención *
           <textarea id="custom-iv-text" rows="2"></textarea>
@@ -544,4 +598,19 @@ export function renderCustomInterventionModal() {
 
 export function renderSaveConfirmToast(text) {
   return `<div class="toast">${esc(text)}</div>`;
+}
+
+export function renderExamplesModal(names) {
+  return `<div class="modal-backdrop" data-modal="examples">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">Caso de ejemplo</h3>
+      <p class="muted">Textos ficticios para probar la extracción local. No son pacientes reales.</p>
+      <div class="case-list">
+        ${names.map((n) => `<button type="button" class="btn btn--secondary" data-action="pick-example" data-example="${esc(n)}">${esc(n)}</button>`).join('')}
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-action="close-modal">Cancelar</button>
+      </div>
+    </div>
+  </div>`;
 }
