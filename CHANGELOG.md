@@ -1,8 +1,8 @@
 # Changelog
 
-## Sin publicar — Flujo común CMO (CMO Design System 0.3.0)
+## v1.2.0 — 2026-11-11 — Flujo común CMO (CMO Design System 0.3.0)
 
-Sin cambios en el modelo clínico: `config.js`, `cmo-engine.js`, `needs-mapper.js`, `interventions-catalog.js` y `heuristic-extraction.js` intactos (huella SHA-256 en `tests/fixtures/clinical-files.sha256.json`). `APP_VERSION` y `cmo-app-meta` no se modifican (la versión y su fecha las fija el autor en el commit de publicación).
+Sin cambios en el modelo clínico: `config.js`, `cmo-engine.js`, `needs-mapper.js`, `interventions-catalog.js` y `heuristic-extraction.js` intactos (huella SHA-256 en `tests/fixtures/clinical-files.sha256.json`). Publicación: `APP_VERSION` «v1.1.0 · Octubre 2026» → «v1.2.0 · Noviembre 2026» y `cmo-app-meta` 1.1.0 → 1.2.0; `releaseDate: "2026-11-11"`.
 - Núcleo CMO fijado en `assets/cmo-ds/` (`cmo-report.js`, `cmo-pdf.js`, `cmo-flow.js/.css`); `assets/modules/assessment.js` es el adaptador (sin lógica clínica).
 - **Resultado provisional**: las variables sin confirmar (incluidas las «desconocidas») no puntúan ni se interpretan como «No»; el paso 5 y el informe indican el número de pendientes y una cota superior calculada con el propio motor.
 - **Modificación profesional** del nivel con justificación obligatoria (≥ 12 caracteres); el resultado automático se conserva y se muestra en el informe; aviso si reduce la intensidad.
