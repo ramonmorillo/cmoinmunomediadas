@@ -1,4 +1,4 @@
-/* CMO Design System 0.2.0 · tema «Estratos» de CMO Inmunomediadas
+/* CMO Design System 0.3.0 · tema «Estratos» de CMO Inmunomediadas
    Se carga después de styles.css. Solo presentación: no altera textos, puntuaciones
    ni los colores semánticos de nivel (.result-card.level-1/2/3: --color-danger/warning/success).
    Tokens: assets/cmo-ds/ (copia fijada, ver CMO-DS-VERSION.json). */
@@ -30,3 +30,13 @@ footer.app-footer { margin-top: var(--cmo-space-7); padding-top: var(--cmo-space
 footer.app-footer a { color: var(--cmo-brand-strong); }
 footer.app-footer cmo-author-signature { margin-top: var(--cmo-space-4); }
 @media print { .app-header__title::before { display: none; } }
+
+/* Flujo común CMO: resultado provisional, importación y ajustes de ancho móvil. */
+@layer cmo.app {
+  .cmo-provisional { border-left: 4px solid var(--cmo-accent); background: var(--cmo-surface-2, #fbf6ea); }
+  .cmo-file-btn { display: inline-flex; align-items: center; cursor: pointer; }
+  .cmo-grow { flex: 1 1 14rem; min-width: 0; }
+  .btn-group, .step-actions, .card__header, .textarea-meta__actions, .inline-form { flex-wrap: wrap; }
+  .report-pre, .selected-intervention, .review-row { min-width: 0; overflow-wrap: anywhere; }
+  .form-grid, .form-grid--3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+}
